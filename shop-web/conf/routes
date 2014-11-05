@@ -1,0 +1,15 @@
+# Routes
+
+GET   /             controllers.Application.index
+GET   /home     	   controllers.Application.home
+GET   /about.html   controllers.Application.about
+GET   /help.html    controllers.Application.help
+GET   /contact.html controllers.Application.contact
+GET   /register     controllers.Application.viewRegister
+POST  /register     controllers.Application.register
+GET   /login        controllers.Application.viewLogin
+POST  /login        controllers.Application.login
+GET   /logout       controllers.Application.logout
+
+GET     /webjars/*file        controllers.WebJarAssets.at(file)
+GET     /assets/*file               controllers.Assets.at(path="/public", file)

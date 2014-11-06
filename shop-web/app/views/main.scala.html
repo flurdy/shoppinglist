@@ -1,4 +1,4 @@
-@(title: Option[String] = None)(content: Html)
+@(title: Option[String] = None)(content: Html)(implicit currentShopper: Option[Shopper] = None)
 @import helper._
 <!DOCTYPE html>
 
@@ -30,6 +30,15 @@
 	            <div id="hull" class="structure">
 	                <div id="vaka" class="structure">
 	                    <div id="bow" class="compartment">
+	                    	@for(shopper <- currentShopper){
+		                    	<div id="figurehead">
+		                    		<ul class="horizontal nav nav-pills">
+		                    			<li><a href="@routes.Application.index">@shopper.username</a></li>
+		                    			<li></li>
+		                    			<li><a href="@routes.Application.logout">x</a></li>
+		                    		</ul>
+		                    	</div>
+		                    }	
 							<header>
 								<a href="@routes.Application.index"><h1>@Messages("application.title")</h1></a>
 							</header>

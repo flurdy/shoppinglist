@@ -9,76 +9,67 @@ import play.api.data.Forms._
 import models._
 import scala.concurrent.Future
 
-// def ShoppingItemAction(itemId: String) = new ActionRefiner[ShopperRequest, ShopperItemRequest] {
-//   def refine[A](input: ShopperRequest[A]) = Future.successful {
-//     ShoppingItem.findById(itemId)
-//       .map(new ShoppingItemRequest(_, input))
-//       .toRight(NotFound)
-//   }
-// }
 
-class ShopperRequest[A](val shopper: Option[Shopper], request: Request[A]) extends WrappedRequest[A](request){
+class ShopperRequest[A](val shopper: Option[Shopper], val request: Request[A]) extends WrappedRequest[A](request){
 	def isAuthenticated = shopper.isDefined
 }
 
+// class WithShopperRequest[A](val shopper: Shopper, request: Request[A]) extends WrappedRequest[A](request)
+
 object ShopperAction extends ActionBuilder[ShopperRequest] with ActionTransformer[Request, ShopperRequest] {
 	def transform[A](request: Request[A]) = Future.successful {
-		request.session.get("username") match {
-			case Some(username) => {	
-				Logger.debug("Logged in")
-				Shoppers.findShopper(username) match {
-					case Some(shopper) => new ShopperRequest( Some(shopper), request)
-					case None 			 => throw new IllegalStateException(s"No shopper found for username: $username")
-				}
-			}
-			case None => new ShopperRequest(None, request)			
-		}
+		val shopper = for{
+			username <- request.session.get("username")
+			shopper  <- Shoppers.findShopper(username)
+		} yield shopper
+		new ShopperRequest( shopper, request)
 	}
 }
 
 object AuthenticatedCheckAction extends ActionFilter[ShopperRequest] {
 	def filter[A](input: ShopperRequest[A]) = Future.successful {
-		if (input.shopper.isDefined){ 
-			Logger.debug("is logged in")
-			None
-		} else {
-			Logger.debug("is not logged in")
-			Some(Forbidden)
-		}
+		if (input.shopper.isDefined) None
+		else Some(Forbidden(views.html.login(Application.loginForm)))
 	}
 }
 
 trait Secured {
 
 	implicit def currentShopper[A](implicit request: ShopperRequest[A]): Option[Shopper] = {
-		Logger.debug("getting current shopper")        
 		request.shopper
 	}
+
+	// def WithShopperAction = new ActionRefiner[ShopperRequest,WithShopperRequest]{
+	// 	def refine[A](input: ShopperRequest[A]) = Future.successful {
+	// 		input.shopper.map(new WithShopperRequest(_,input.request)).toRight(NotFound)
+	// 	}
+	// }
 
 }
 
 
 object Application extends Controller with Secured {
 
-	def index = ShopperAction { request => 
-		if(request.isAuthenticated) {
-			Redirect(routes.Application.home)
-		} else {
-			Ok(views.html.index())
-		}		
-	}
-
-	def home = (ShopperAction andThen AuthenticatedCheckAction) { implicit request =>
-		Ok(views.html.home())
+	def index = ShopperAction { request =>
+      request.shopper match {
+         case Some(shopper) if request.isAuthenticated => {
+			   Redirect(routes.ShoppingController.viewShopper(shopper.username))
+         }
+         case _ => Ok(views.html.index())
+		}
 	}
 
 	def about = ShopperAction { implicit request =>
 		Ok(views.html.about())
 	}
 
-	def help = TODO
+	def help = ShopperAction { implicit request =>
+      Ok(views.html.about())
+   }
 
-	def contact = TODO
+	def contact = ShopperAction { implicit request =>
+      Ok(views.html.about())
+   }
 
 	val registerFields = mapping (
 		"username" -> text,
@@ -109,12 +100,12 @@ object Application extends Controller with Secured {
 					}
 					case None => {
 						registerDetails.register
-						Redirect(routes.Application.home).withSession("username" -> registerDetails.username)						
+						Redirect(routes.Application.index).withSession("username" -> registerDetails.username)
 					}
 				}
 			}
     	)
-	}	
+	}
 
 	val loginFields = mapping(
 		"username" -> text,
@@ -136,7 +127,7 @@ object Application extends Controller with Secured {
 			loginDetails => {
 				Authentication.authenticate(loginDetails) match {
 					case Some(shopper) => {
-						Redirect(routes.Application.home).withSession("username" -> loginDetails.username)
+						Redirect(routes.Application.index).withSession("username" -> loginDetails.username)
 					}
 					case None => {
 						Logger.warn(s"Authentication failed for ${loginDetails.username}")

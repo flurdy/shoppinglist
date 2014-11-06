@@ -1,0 +1,41 @@
+@(shoppingList: ShoppingList)(implicit currentShopper: Option[Shopper])
+
+@import helper._
+
+
+@main(Some("shopping list")){
+
+
+	<h3>@Messages("shopping.list"): @shoppingList.name</h3>
+
+	<div class="well">
+
+
+		<table class="table table-striped">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Description</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+            @for( item <- shoppingList.items){
+   				<tr>
+   					<td>
+                     @item.name
+   					</td>
+   					<td>
+                     @item.description
+   					</td>
+   					<td>
+   					</td>
+   				</tr>
+            }
+			</tbody>
+		</table>
+
+	</div>
+
+
+}

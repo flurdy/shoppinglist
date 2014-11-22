@@ -99,8 +99,17 @@ object Application extends Controller with Secured {
 						BadRequest(views.html.register(registerForm.fill(registerDetails)))
 					}
 					case None => {
-						registerDetails.register
-						Redirect(routes.Application.index).withSession("username" -> registerDetails.username)
+						registerDetails.register match {
+							case Some(shopper) => {
+								Logger.warn(s"Registered: ${registerDetails.username}")
+								Redirect(routes.Application.index).withSession("username" -> registerDetails.username)
+							}
+							case None => {
+								Logger.warn(s"Registration failed: ${registerDetails.username}")
+								implicit val errorMessages = List(ErrorMessage("Registration failed"))
+								BadRequest(views.html.register(registerForm.fill(registerDetails)))
+							}
+						}
 					}
 				}
 			}
@@ -125,7 +134,9 @@ object Application extends Controller with Secured {
 				BadRequest(views.html.login(errors))
 			},
 			loginDetails => {
-				Authentication.authenticate(loginDetails) match {
+				val re = Authentication.authenticate(loginDetails) 
+				Logger.info("re is "+re)
+				re match {
 					case Some(shopper) => {
 						Redirect(routes.Application.index).withSession("username" -> loginDetails.username)
 					}

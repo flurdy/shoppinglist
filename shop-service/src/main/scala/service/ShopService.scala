@@ -86,63 +86,109 @@ trait ShopService extends HttpService {
             complete(shopper)
           }
         }
-      }
-    } ~
-    path("shoppinglist") {
-      pathEnd {
-        post {
-          complete{
-"""{
-  "shoppinglist":{
+      } ~
+      path("lists") {
+        pathEnd {
+          get {
+            complete{
+"""[
+  {
     "id": 123,
     "owner": {
       "id": 456,
       "username": "blaah"
     }
     "name": "christmas"
+  },
+  {
+    "id": 456,
+    "owner": {
+      "id": 456,
+      "username": "blaah"
+    }
+    "name": "groceries"
   }
-}
+]
 """
+            }          
           }
-        }
-      }
-    } ~
-    pathPrefix("shoppinglist" / IntNumber) { listId =>
-      pathEnd {
-        (put | parameter('method ! "put")) {
-          complete{
-"""{
-  "shoppinglist":{
+        } ~ 
+        path("other") {
+          get {
+            complete{
+"""[
+  {
     "id": 123,
     "owner": {
       "id": 456,
       "username": "blaah"
     }
     "name": "christmas"
+  },
+  {
+    "id": 456,
+    "owner": {
+      "id": 456,
+      "username": "blaah"
+    }
+    "name": "groceries"
   }
+]
+""" 
+            }
+          }          
+        }
+      } ~ 
+      path("list") {
+        pathEnd {
+          post {
+            complete{
+"""{
+  "id": 123,
+  "owner": {
+    "id": 456,
+    "username": "blaah"
+  }
+  "name": "christmas"
 }
-"""
+"""       
+            }
           }
         } ~
-        get {
-          complete{
+        pathPrefix( IntNumber ) { listId =>
+          pathEnd {
+            (put | parameter('method ! "put")) {
+              complete {
 """{
-  "shoppinglist":{
-    "id": 123,
-    "owner": {
-      "id": 456,
-      "username": "blaah"
-    }
-    "name": "christmas"
+  "id": 123,
+  "owner": {
+    "id": 456,
+    "username": "blaah"
   }
+  "name": "christmas"
 }
-"""
-          }
-        }
-      } ~
-      path("items"){
-        get {
-          complete {
+"""             
+              }
+            } ~
+            get{
+              val shoppingList = None
+              complete{
+"""{
+  "id": 123,
+  "owner": {
+    "id": 456,
+    "username": "blaah"
+  }
+  "name": "christmas"
+}
+"""         
+              }
+            }
+          } ~ 
+          path("items"){
+            pathEnd {
+              get{
+                complete{
 """[
   {
     "id": 123,
@@ -153,43 +199,48 @@ trait ShopService extends HttpService {
     "name": "bicycle"
   }
 ]
-"""
-          }
-        }
-      } ~
-      path("item"){
-        post {
-          complete {
-"""{
-  "id": 345,
-  "name": "bicycle"
-}
-"""
-          }
-        }
-      } ~
-      pathPrefix("item" / IntNumber){ itemId =>
-        pathEnd {
-          (put | parameter('method ! "put")) {
-            complete {
-  """{
-    "id": 345,
-    "name": "bicycle"
-  }
-  """
+"""            
+                } 
+              }
             }
           } ~
-          get {
-            complete {
+          path("item"){
+            pathEnd {
+              post {
+                complete{
   """{
     "id": 345,
     "name": "bicycle"
   }
-  """
+  """             
+                }
+              }
+            }
+            pathPrefix( IntNumber ) { listId =>
+              pathEnd {
+                (put | parameter('method ! "put")) {
+                  complete {
+  """{
+    "id": 345,
+    "name": "bicycle"
+  }
+  """ 
+                  }
+                } ~
+                get {
+                  complete{
+  """{
+    "id": 345,
+    "name": "bicycle"
+  }
+  """             
+                  }
+                }
+              }
             }
           }
         }
-      }
-    }
+      } 
+    } 
 
 }

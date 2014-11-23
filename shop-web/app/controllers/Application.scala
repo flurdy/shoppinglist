@@ -134,9 +134,7 @@ object Application extends Controller with Secured {
 				BadRequest(views.html.login(errors))
 			},
 			loginDetails => {
-				val re = Authentication.authenticate(loginDetails) 
-				Logger.info("re is "+re)
-				re match {
+				loginDetails.authenticate match {
 					case Some(shopper) => {
 						Redirect(routes.Application.index).withSession("username" -> loginDetails.username)
 					}

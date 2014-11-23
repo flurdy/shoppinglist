@@ -42,7 +42,7 @@ object ShoppingController extends Controller with Secured with ShoppingActions {
 	def viewList(username: String, listId: Long) = (ShopperAction
 			andThen AuthenticatedCheckAction
 			andThen ShoppingListAction(listId)) { implicit request =>
-		val list = request.shoppingList.includeItems
+		val list = request.shoppingList.includeItems(username)
 		Ok(views.html.shop.viewList(list))
 	}
 

@@ -55,9 +55,8 @@ object ShoppingListAdapter extends ServiceAdapter {
       }
    }
 
-   def listIsAccessibleByShopper(listId: Long, shopperId: Long) = {
-      // TODO
-      true
+   def listIsAccessibleByShopper(username: String, listId: Long): Boolean = {
+      findList(username,listId).isDefined
    }
 
    def findShoppingItems(username: String, list: ShoppingList): Seq[ShoppingItem] = {

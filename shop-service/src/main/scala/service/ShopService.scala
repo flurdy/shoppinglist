@@ -25,6 +25,8 @@ object ShopJsonProtocol extends DefaultJsonProtocol {
   implicit val registerFormat     = jsonFormat2(RegistrationDetails)
   implicit val authenticateFormat = jsonFormat2(LoginDetails)
   implicit val shopperFormat      = jsonFormat2(Shopper)
+  implicit val shoppingItemFormat = jsonFormat3(ShoppingItem)
+  implicit val shoppingListFormat = jsonFormat3(ShoppingList)
 }
 
 import ShopJsonProtocol._
@@ -41,17 +43,16 @@ trait ShopService extends HttpService {
         }
       }
     } ~
-    path("register") {
-      post {
-        entity(as[RegistrationDetails]){ details =>
-          detach(){
-            rejectEmptyResponse {
-              respondWithStatus(201) {
-                respondWithMediaType(MediaTypes.`application/json`){
+    respondWithMediaType(MediaTypes.`application/json`){
+      path("register") {
+        post {
+          entity(as[RegistrationDetails]){ details =>
+            detach(){
+              rejectEmptyResponse {
+                respondWithStatus(201) {
                   log.info(s"Registering ${details.username}")
                   val shopper = details.register
-                  log.debug("Registered: "+shopper.isDefined)
-                  val id = shopper.flatMap( s => s.id.map ( i => i ) ).getOrElse(-1)
+                  val id = shopper.flatMap( s => s.id ).getOrElse(-1)
                   respondWithHeader(RawHeader("Location", s"/shopper/${id}")) {
                     complete(shopper)
                   }
@@ -60,180 +61,119 @@ trait ShopService extends HttpService {
             }
           }
         }
-      }
-    } ~
-    path("authenticate") {
-      post {
-        rejectEmptyResponse {
-          respondWithMediaType(MediaTypes.`application/json`){
+      } ~
+      path("authenticate") {
+        post {
+          rejectEmptyResponse {
             entity(as[LoginDetails]){ details =>    
               log.info(s"Authenticating ${details.username}")
               val shopper = details.authenticate
-              log.info("Authenticated: "+shopper.isDefined)
               complete(shopper)
             }
           }
         }
-      }
-    } ~
-    pathPrefix("shopper" / Segment) { username =>
-      pathEnd {
-        rejectEmptyResponse {
-          respondWithMediaType(MediaTypes.`application/json`){
-            log.info(s"Looking for shopper $username")
-            val shopper = Shoppers.findShopper(username)
-            log.info("Shopper found: "+shopper.isDefined)
+      } ~
+      pathPrefix("shopper" / Segment) { username =>
+        val shopper = Shoppers.findShopper(username)
+        pathEnd {
+          rejectEmptyResponse {
             complete(shopper)
           }
-        }
-      } ~
-      path("lists") {
-        pathEnd {
-          get {
-            complete{
-"""[
-  {
-    "id": 123,
-    "owner": {
-      "id": 456,
-      "username": "blaah"
-    }
-    "name": "christmas"
-  },
-  {
-    "id": 456,
-    "owner": {
-      "id": 456,
-      "username": "blaah"
-    }
-    "name": "groceries"
-  }
-]
-"""
+        } ~
+        path("lists") {
+          pathEnd {
+            get {
+              rejectEmptyResponse {
+                val lists = shopper.map(_.findLists)
+                complete(lists.map(_.toStream))
+              }          
+            }
+          } ~ 
+          path("other") {
+            get {
+              rejectEmptyResponse {
+                val lists = shopper.map(_.findOtherLists)
+                complete(lists.map(_.toStream))
+              }  
             }          
           }
         } ~ 
-        path("other") {
-          get {
-            complete{
-"""[
-  {
-    "id": 123,
-    "owner": {
-      "id": 456,
-      "username": "blaah"
-    }
-    "name": "christmas"
-  },
-  {
-    "id": 456,
-    "owner": {
-      "id": 456,
-      "username": "blaah"
-    }
-    "name": "groceries"
-  }
-]
-""" 
-            }
-          }          
-        }
-      } ~ 
-      path("list") {
-        pathEnd {
-          post {
-            complete{
-"""{
-  "id": 123,
-  "owner": {
-    "id": 456,
-    "username": "blaah"
-  }
-  "name": "christmas"
-}
-"""       
-            }
-          }
-        } ~
-        pathPrefix( IntNumber ) { listId =>
+        path("list") {
           pathEnd {
-            (put | parameter('method ! "put")) {
-              complete {
-"""{
-  "id": 123,
-  "owner": {
-    "id": 456,
-    "username": "blaah"
-  }
-  "name": "christmas"
-}
-"""             
-              }
-            } ~
-            get{
-              val shoppingList = None
-              complete{
-"""{
-  "id": 123,
-  "owner": {
-    "id": 456,
-    "username": "blaah"
-  }
-  "name": "christmas"
-}
-"""         
-              }
-            }
-          } ~ 
-          path("items"){
-            pathEnd {
-              get{
-                complete{
-"""[
-  {
-    "id": 123,
-    "name": "boot"
-  },
-  {
-    "id": 345,
-    "name": "bicycle"
-  }
-]
-"""            
-                } 
-              }
-            }
-          } ~
-          path("item"){
-            pathEnd {
-              post {
-                complete{
-  """{
-    "id": 345,
-    "name": "bicycle"
-  }
-  """             
+            post {
+              rejectEmptyResponse {           
+                entity(as[ShoppingList]){ list =>
+                  respondWithStatus(201) {     
+                    val shoppingList = list.save 
+                    val id = shoppingList.flatMap( s => s.id ).getOrElse(-1)
+                    respondWithHeader(RawHeader("Location", s"/shopper/${username}/list/${id}")) {
+                      complete(shoppingList)
+                    }
+                  }
                 }
               }
             }
-            pathPrefix( IntNumber ) { listId =>
-              pathEnd {
-                (put | parameter('method ! "put")) {
-                  complete {
-  """{
-    "id": 345,
-    "name": "bicycle"
-  }
-  """ 
+          } ~
+          pathPrefix( IntNumber ) { listId =>
+            val shoppingList = ShoppingLists.findList(listId)
+            pathEnd {
+              (put | parameter('method ! "put")) {
+                rejectEmptyResponse {           
+                  entity(as[ShoppingList]){ list =>
+                    val updatedList = shoppingList.flatMap(_.save)
+                    complete(updatedList)
                   }
-                } ~
-                get {
-                  complete{
-  """{
-    "id": 345,
-    "name": "bicycle"
-  }
-  """             
+                }
+              } ~
+              get{
+                rejectEmptyResponse {  
+                  complete(shoppingList)
+                }
+              }
+            } ~ 
+            path("items"){
+              pathEnd {
+                get{
+                  rejectEmptyResponse {  
+                    val items: Option[Seq[ShoppingItem]] = shoppingList.map(_.findItems)
+                    // TODO
+                    // complete(items.map(_(0)))
+                    complete(items.map(_.toStream))
+                  }
+                }
+              }
+            } ~
+            path("item"){
+              pathEnd {
+                post {
+                  rejectEmptyResponse {  
+                    entity(as[ShoppingItem]){ item => 
+                      respondWithStatus(201) {    
+                        val shoppingItem = item.save 
+                        val id = shoppingItem.flatMap( s => s.id ).getOrElse(-1)
+                        respondWithHeader(RawHeader("Location", s"/shopper/${username}/list/${listId}/item/${id}")) {
+                          complete(item)
+                        }
+                      }
+                    }
+                  }
+                }
+              } ~
+              pathPrefix( IntNumber ) { itemId =>
+                val shoppingItem = shoppingList.flatMap( _.findItem(itemId) )
+                pathEnd {
+                  (put | parameter('method ! "put")) {
+                    rejectEmptyResponse {  
+                      entity(as[ShoppingItem]){ item => 
+                        val updatedItem = item.save 
+                        complete(updatedItem)
+                      }
+                    }
+                  } ~
+                  get {
+                    rejectEmptyResponse {  
+                      complete(shoppingItem)
+                    }
                   }
                 }
               }

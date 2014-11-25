@@ -11,13 +11,8 @@ case class ShoppingList(id: Option[Long], name: String, owner: Shopper, items: S
    def includeItems(username: String) = this.copy(items = ShoppingListAdapter.findShoppingItems(username,this))
 
    def isAccessibleBy(shopper: Shopper) = {
-      ( for{
-         listId    <- id
-         shopperId <- shopper.id
-      } yield ShoppingListAdapter.listIsAccessibleByShopper(listId,shopperId)
-      ).getOrElse(false)
+      id.map( ShoppingListAdapter.listIsAccessibleByShopper(shopper.username,_) ).getOrElse(false)
    }
-
 
 }
 

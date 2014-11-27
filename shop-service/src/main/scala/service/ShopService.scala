@@ -26,7 +26,7 @@ object ShopJsonProtocol extends DefaultJsonProtocol {
   implicit val authenticateFormat = jsonFormat2(LoginDetails)
   implicit val shopperFormat      = jsonFormat2(Shopper)
   implicit val shoppingItemFormat = jsonFormat3(ShoppingItem)
-  implicit val shoppingListFormat = jsonFormat3(ShoppingList)
+  implicit val shoppingListFormat = jsonFormat4(ShoppingList)
 }
 
 import ShopJsonProtocol._
@@ -65,7 +65,7 @@ trait ShopService extends HttpService {
       path("authenticate") {
         post {
           rejectEmptyResponse {
-            entity(as[LoginDetails]){ details =>    
+            entity(as[LoginDetails]){ details =>
               log.info(s"Authenticating ${details.username}")
               val shopper = details.authenticate
               complete(shopper)
@@ -86,25 +86,25 @@ trait ShopService extends HttpService {
               rejectEmptyResponse {
                 val lists = shopper.map(_.findLists)
                 complete(lists.map(_.toStream))
-              }          
+              }
             }
-          } ~ 
+          } ~
           path("other") {
             get {
               rejectEmptyResponse {
                 val lists = shopper.map(_.findOtherLists)
                 complete(lists.map(_.toStream))
-              }  
-            }          
+              }
+            }
           }
-        } ~ 
+        } ~
         path("list") {
           pathEnd {
             post {
-              rejectEmptyResponse {           
+              rejectEmptyResponse {
                 entity(as[ShoppingList]){ list =>
-                  respondWithStatus(201) {     
-                    val shoppingList = list.save 
+                  respondWithStatus(201) {
+                    val shoppingList = list.save
                     val id = shoppingList.flatMap( s => s.id ).getOrElse(-1)
                     respondWithHeader(RawHeader("Location", s"/shopper/${username}/list/${id}")) {
                       complete(shoppingList)
@@ -118,7 +118,7 @@ trait ShopService extends HttpService {
             val shoppingList = ShoppingLists.findList(listId)
             pathEnd {
               (put | parameter('method ! "put")) {
-                rejectEmptyResponse {           
+                rejectEmptyResponse {
                   entity(as[ShoppingList]){ list =>
                     val updatedList = shoppingList.flatMap(_.save)
                     complete(updatedList)
@@ -126,15 +126,15 @@ trait ShopService extends HttpService {
                 }
               } ~
               get{
-                rejectEmptyResponse {  
+                rejectEmptyResponse {
                   complete(shoppingList)
                 }
               }
-            } ~ 
+            } ~
             path("items"){
               pathEnd {
                 get{
-                  rejectEmptyResponse {  
+                  rejectEmptyResponse {
                     val items: Option[Seq[ShoppingItem]] = shoppingList.map(_.findItems)
                     // TODO
                     // complete(items.map(_(0)))
@@ -146,10 +146,10 @@ trait ShopService extends HttpService {
             path("item"){
               pathEnd {
                 post {
-                  rejectEmptyResponse {  
-                    entity(as[ShoppingItem]){ item => 
-                      respondWithStatus(201) {    
-                        val shoppingItem = item.save 
+                  rejectEmptyResponse {
+                    entity(as[ShoppingItem]){ item =>
+                      respondWithStatus(201) {
+                        val shoppingItem = item.save
                         val id = shoppingItem.flatMap( s => s.id ).getOrElse(-1)
                         respondWithHeader(RawHeader("Location", s"/shopper/${username}/list/${listId}/item/${id}")) {
                           complete(item)
@@ -163,15 +163,15 @@ trait ShopService extends HttpService {
                 val shoppingItem = shoppingList.flatMap( _.findItem(itemId) )
                 pathEnd {
                   (put | parameter('method ! "put")) {
-                    rejectEmptyResponse {  
-                      entity(as[ShoppingItem]){ item => 
-                        val updatedItem = item.save 
+                    rejectEmptyResponse {
+                      entity(as[ShoppingItem]){ item =>
+                        val updatedItem = item.save
                         complete(updatedItem)
                       }
                     }
                   } ~
                   get {
-                    rejectEmptyResponse {  
+                    rejectEmptyResponse {
                       complete(shoppingItem)
                     }
                   }
@@ -180,7 +180,7 @@ trait ShopService extends HttpService {
             }
           }
         }
-      } 
-    } 
+      }
+    }
 
 }

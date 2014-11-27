@@ -5,6 +5,8 @@ import shop.infrastructure._
 
 case class Shopper(id: Option[Long], username: String){
 
+   def this(id: Long, username: String) = this(Some(id),username)
+
    def findLists: Seq[ShoppingList] = for {
          shopperId <- id.toList
          list      <- ShoppingListRepository.findOwnerLists(shopperId)
@@ -17,7 +19,7 @@ case class Shopper(id: Option[Long], username: String){
 }
 
 object Shoppers {
-   
-   def findShopper = ShopperRepository.findShopper _
+
+   def findShopper(username: String) = ShopperRepository.findShopper(username)
 
 }

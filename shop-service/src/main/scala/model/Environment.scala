@@ -31,7 +31,7 @@ case class LoginDetails(username: String, password: String){
       for{
          shopper  <- Shoppers.findShopper(username)
          password <- IdentityRepository.findEncryptedPassword(username)
-         // if password.isBcrypted(password)
+         if password.isBcrypted(password)
       } yield shopper
    }
 

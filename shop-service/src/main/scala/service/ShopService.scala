@@ -136,8 +136,6 @@ trait ShopService extends HttpService {
                 get{
                   rejectEmptyResponse {
                     val items: Option[Seq[ShoppingItem]] = shoppingList.map(_.findItems)
-                    // TODO
-                    // complete(items.map(_(0)))
                     complete(items.map(_.toStream))
                   }
                 }

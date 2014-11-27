@@ -27,6 +27,13 @@ class ShoppingListSchema(tag: Tag) extends Table[(Long,String,Long)](tag,"shoppi
   def * = (id, name, ownerId)
 }
 
+class ListParticipantSchema(tag: Tag) extends Table[(Long,Long,Long)](tag,"list_participant"){
+  def id      = column[Long]("id",O.PrimaryKey)
+  def listId      = column[Long]("list_id")
+  def participantId = column[Long]("participant_id")
+  def * = (id, listId, participantId)
+}
+
 class ShoppingItemSchema(tag: Tag) extends Table[(Long,String,String,Long)](tag,"shopping_item"){
   def id          = column[Long]("id",O.PrimaryKey)
   def name        = column[String]("itemname")
@@ -63,6 +70,7 @@ trait Repository {
    val identities    = TableQuery[IdentitySchema]
    val shoppingLists = TableQuery[ShoppingListSchema]
    val shoppingItems = TableQuery[ShoppingItemSchema]
+   val listParticipants = TableQuery[ListParticipantSchema]
 
 }
 
@@ -137,6 +145,19 @@ object ShoppingListRepository extends Repository {
             list.flatMap{
                case (id,_,_) => findList(id)
             }
+      }
+   }
+
+   def findParticipantLists(shopperId: Long): Seq[ShoppingList] = {
+      database.withSession{ implicit session =>
+         ( for{
+            participant <- listParticipants if participant.participantId === shopperId
+            list        <- shoppingLists    if list.id === participant.listId
+            shopper     <- shoppers         if shopper.id === list.ownerId
+         } yield (list.id, list.name, shopper.id, shopper.username ) ).list.map{
+            case (listId, listName, shopperId, username) =>
+               new ShoppingList(listId,listName, new Shopper(shopperId,username))
+         }
       }
    }
 

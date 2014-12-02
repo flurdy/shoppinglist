@@ -6,14 +6,19 @@ case class ShoppingItem(id: Option[Long], name: String, description: Option[Stri
 
    def this(id: Long,name: String) = this(Some(id),name,None)
 
-   def save: Option[ShoppingItem] = {
-      for {
-         list  <- findList
-         newId <- ShoppingItemRepository.save(list,this)
-      } yield this.copy(id=Some(newId))
+   def this(name: String)          = this(None,name,None)
+
+   def update(implicit registry: ComponentRegistry): Option[ShoppingItem] = {
+      registry.shoppingItemRepository.update(this)
    }
 
-   private def findList: Option[ShoppingList] = id.flatMap(ShoppingListRepository.findItemList(_))
+   def save(list: ShoppingList)(implicit registry: ComponentRegistry): Option[ShoppingItem] = {
+      registry.shoppingItemRepository.save(list,this).map( newId => this.copy(id=Some(newId)) )
+   }
+
+   private def findList(implicit registry: ComponentRegistry): Option[ShoppingList] = {
+      id.flatMap(registry.shoppingListRepository.findItemList(_))
+   }
 
 }
 

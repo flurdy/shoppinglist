@@ -7,14 +7,20 @@ import akka.pattern.ask
 import akka.util.Timeout
 import scala.concurrent.duration._
 import shop.service._
+import shop.infrastructure._
+import shop.model._
 
 object Boot extends App {
 
   implicit val system = ActorSystem("shop-service-system")
 
-  val service = system.actorOf(Props[ShopServiceActor], "shop-service")
+  implicit val componentRegistry = new RuntimeComponentRegistry
+
+  val service = system.actorOf(Props(classOf[ShopServiceActor],componentRegistry), "shop-service")
 
   implicit val timeout = Timeout(5.seconds)
+
+  (new RepositoryInitialiser).initialiseDatabase
 
   IO(Http) ? Http.Bind(service, interface = "localhost", port = 8080)
 

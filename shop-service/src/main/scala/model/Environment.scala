@@ -2,40 +2,15 @@ package shop.model
 
 import com.github.t3hnar.bcrypt._
 import spray.util.LoggingContext
-import akka.event.Logging
+// import akka.event.Logging
 import shop.infrastructure._
 import com.jolbox.bonecp.BoneCPDataSource
 import javax.sql.DataSource
 import com.typesafe.config.{Config,ConfigFactory}
+import org.slf4j.LoggerFactory
+import ch.qos.logback.core.util.StatusPrinter
+// import ch.qos.logback.classic.LoggerContext
 
-// TODO change to actors
-
-case class RegistrationDetails(username: String, password: String){
-
-   def register: Option[Shopper] = {
-      Shoppers.findShopper(username) match {
-         case None => {
-            val encryptedPassword = password.bcrypt
-            ShopperRepository.save(username,encryptedPassword).map { id =>
-              new Shopper(id,username)
-            }
-         }
-         case _ => None
-      }
-   }
-
-}
-
-case class LoginDetails(username: String, password: String){
-   def authenticate: Option[Shopper] = {
-      for{
-         shopper  <- Shoppers.findShopper(username)
-         password <- IdentityRepository.findEncryptedPassword(username)
-         if password.isBcrypted(password)
-      } yield shopper
-   }
-
-}
 
 case class DatasourceConfig(
              driver: String, url: String, username: String, password: String)  {
@@ -53,7 +28,7 @@ case class DatasourceConfig(
 
 object Environment {
 
-  val config = ConfigFactory.load()
+  private val config = ConfigFactory.load()
 
   lazy val datasourceConfig = findDatasource
 
@@ -64,5 +39,40 @@ object Environment {
     val password = config.getString(s"datasource.password")
     DatasourceConfig(driver,url,username,password)
   }
+
+}
+
+trait Logging {
+   def logger = LoggerFactory.getLogger(this.getClass)
+}
+
+
+trait ComponentRegistry {
+
+   // implicit val registry = this
+
+   val datasourceConfig: DatasourceConfig
+
+   val shopperRepository: ShopperRepository
+
+   val identityRepository: IdentityRepository
+
+   val shoppingListRepository: ShoppingListRepository
+
+   val shoppingItemRepository: ShoppingItemRepository
+
+}
+
+class RuntimeComponentRegistry extends ComponentRegistry {
+
+   val datasourceConfig = Environment.datasourceConfig
+
+   val shopperRepository = new ShopperRepository()(this)
+
+   val identityRepository = new IdentityRepository()(this)
+
+   val shoppingListRepository = new ShoppingListRepository()(this)
+
+   val shoppingItemRepository = new ShoppingItemRepository()(this)
 
 }

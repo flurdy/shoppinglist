@@ -8,21 +8,26 @@ case class ShoppingList(id: Option[Long], name: String, owner: Shopper, items: S
 
    def this(id: Long, name: String, owner: Shopper) = this(Some(id),name,owner,Seq.empty)
 
-   def save: Option[ShoppingList] = ShoppingListRepository.save(this).map( newId => this.copy(id=Some(newId)) )
+   def this(name: String, owner: Shopper) = this(None,name,owner,Seq.empty)
 
-   def findItems: Seq[ShoppingItem] = for{
+   def save(implicit registry: ComponentRegistry): Option[ShoppingList] = {
+      registry.shoppingListRepository.save(this).map( newId => this.copy(id=Some(newId)) )
+   }
+
+   def findItems(implicit registry: ComponentRegistry): Seq[ShoppingItem] = for{
          listId <- id.toList
-         item   <- ShoppingItemRepository.findItems(listId)
+         item   <- registry.shoppingItemRepository.findItems(listId)
       } yield item
 
-   def findItem(itemId: Long): Option[ShoppingItem] =
-         id.flatMap(ShoppingItemRepository.findItem(_,itemId))
+   def findItem(itemId: Long)(implicit registry: ComponentRegistry): Option[ShoppingItem] = {
+      id.flatMap(registry.shoppingItemRepository.findItem(_,itemId))
+   }
 
 }
 
 object ShoppingLists {
 
-   def findList(listId: Long) = ShoppingListRepository.findList(listId)
+   def findList(listId: Long)(implicit registry: ComponentRegistry) = registry.shoppingListRepository.findList(listId)
 
 }
 

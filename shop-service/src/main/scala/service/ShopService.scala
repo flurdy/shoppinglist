@@ -16,7 +16,7 @@ import spray.util._
 import akka.event.Logging
 
 
-class ShopServiceActor extends Actor with ShopService {
+class ShopServiceActor(val registry: ComponentRegistry) extends Actor with ShopService {
   def actorRefFactory = context
   def receive = runRoute(myRoute)
 }
@@ -32,6 +32,8 @@ object ShopJsonProtocol extends DefaultJsonProtocol {
 import ShopJsonProtocol._
 
 trait ShopService extends HttpService {
+
+  implicit val registry: ComponentRegistry
 
   val log = LoggingContext.fromActorRefFactory
 
@@ -74,7 +76,7 @@ trait ShopService extends HttpService {
         }
       } ~
       pathPrefix("shopper" / Segment) { username =>
-        val shopper = Shoppers.findShopper(username)
+        val shopper: Option[Shopper] = Shoppers.findShopper(username)
         pathEnd {
           rejectEmptyResponse {
             complete(shopper)
@@ -84,8 +86,8 @@ trait ShopService extends HttpService {
           pathEnd {
             get {
               rejectEmptyResponse {
-                val lists = shopper.map(_.findLists)
-                complete(lists.map(_.toStream))
+                val lists: Option[Stream[ShoppingList]] = shopper.map(_.findLists.toStream)
+                complete(lists)
               }
             }
           } ~
@@ -147,8 +149,9 @@ trait ShopService extends HttpService {
                   rejectEmptyResponse {
                     entity(as[ShoppingItem]){ item =>
                       respondWithStatus(201) {
-                        val shoppingItem = item.save
-                        val id = shoppingItem.flatMap( s => s.id ).getOrElse(-1)
+                        val id = shoppingList.
+                          flatMap( list => item.save(list)).
+                          flatMap( s => s.id ).getOrElse(-1)
                         respondWithHeader(RawHeader("Location", s"/shopper/${username}/list/${listId}/item/${id}")) {
                           complete(item)
                         }
@@ -163,7 +166,7 @@ trait ShopService extends HttpService {
                   (put | parameter('method ! "put")) {
                     rejectEmptyResponse {
                       entity(as[ShoppingItem]){ item =>
-                        val updatedItem = item.save
+                        val updatedItem = item.update
                         complete(updatedItem)
                       }
                     }

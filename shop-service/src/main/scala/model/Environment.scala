@@ -49,8 +49,6 @@ trait Logging {
 
 trait ComponentRegistry {
 
-   // implicit val registry = this
-
    val datasourceConfig: DatasourceConfig
 
    val shopperRepository: ShopperRepository

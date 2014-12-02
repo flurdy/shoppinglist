@@ -1,12 +1,13 @@
 package shop.model
 
 import org.specs2.mock.Mockito
+import org.mockito.Mockito._
 import shop.infrastructure._
 import org.specs2.specification._
 
 trait TestRegistry {
 
-   val registry = new TestComponentRegistry
+   implicit val registry = new TestComponentRegistry
 
 }
 
@@ -18,13 +19,17 @@ trait RuntimeRegistry {
 
 }
 
-class TestComponentRegistry extends ComponentRegistry with Mockito {
+class TestComponentRegistry extends ComponentRegistry {
 
-   val datasourceConfig       = mock[DatasourceConfig]
-   val shopperRepository      = mock[ShopperRepository]
-   val identityRepository     = mock[IdentityRepository]
-   val shoppingListRepository = mock[ShoppingListRepository]
-   val shoppingItemRepository = mock[ShoppingItemRepository]
+   val datasourceConfig       = mock(classOf[DatasourceConfig])
+   val shopperRepository      = mock(classOf[ShopperRepository])
+   val identityRepository     = mock(classOf[IdentityRepository])
+   val shoppingListRepository = mock(classOf[ShoppingListRepository])
+   val shoppingItemRepository = mock(classOf[ShoppingItemRepository])
+
+}
+
+trait ScopedRegistry extends Scope with TestRegistry{
 
 }
 

@@ -7,12 +7,6 @@ import shop.service._
 import shop.model._
 import shop.infrastructure._
 import org.h2.jdbc.JdbcSQLException
-// import org.junit.runner.RunWith
-// import com.typesafe.slick.testkit.util.{ExternalJdbcTestDB, TestDB, DriverTest, Testkit}
-// import scala.slick.jdbc.ResultSetInvoker
-// import scala.slick.jdbc.GetResult._
-// import scala.slick.driver.PostgresDriver
-// import scala.slick.driver.H2Driver
 
 
 class IdentityRepositorySpec extends Specification with RuntimeRegistry with Repository {
@@ -23,20 +17,16 @@ class IdentityRepositorySpec extends Specification with RuntimeRegistry with Rep
    "Identity repository" should {
 
       "save shopper identity" in {
-         database.withSession{ implicit session =>
-            val identityId = identityRepository.save(123L, "password")
-            identityId must beSome(beGreaterThan(0L))
-         }
+         val identityId = identityRepository.save(123L, "password")
+         identityId must beSome(beGreaterThan(0L))
       }
 
       "save several identities" in {
-         database.withSession{ implicit session =>
-            val identityId1 = identityRepository.save(124L, "password")
-            val identityId2 = identityRepository.save(125L, "password")
-            identityId1 must beSome(beGreaterThan(0L))
-            identityId2 must beSome(beGreaterThan(0L))
-            identityId1 must not be equalTo(identityId2)
-         }
+         val identityId1 = identityRepository.save(124L, "password")
+         val identityId2 = identityRepository.save(125L, "password")
+         identityId1 must beSome(beGreaterThan(0L))
+         identityId2 must beSome(beGreaterThan(0L))
+         identityId1 must not be equalTo(identityId2)
       }
 
       "not find password" in {
@@ -76,7 +66,7 @@ class ShopperRepositorySpec extends Specification with RuntimeRegistry {
          shopperId1 must not be equalTo(shopperId2)
       }
 
-      "not save an exisiting shopper" in {
+      "not save an existing shopper" in {
          shopperRepository.save("username4")
          shopperRepository.save("username4") must throwA[JdbcSQLException]
       }

@@ -7,7 +7,7 @@ import shop.infrastructure._
 
 // TODO change to actors
 
-case class RegistrationDetails(username: String, password: String){
+case class RegistrationDetails(username: String, password: String) { // extends Logging {
 
    def register(implicit registry: ComponentRegistry): Option[Shopper] = {
       Shoppers.findShopper(username) match {
@@ -24,13 +24,14 @@ case class RegistrationDetails(username: String, password: String){
 
 }
 
-case class LoginDetails(username: String, password: String){
+case class LoginDetails(username: String, password: String) extends Logging {
+   logger.info(s"#### username [$username] [$password]")
    def authenticate(implicit registry: ComponentRegistry): Option[Shopper] = {
       for{
          shopper   <- Shoppers.findShopper(username)
          shopperId <- shopper.id
-         password  <- registry.identityRepository.findEncryptedPassword(shopperId)
-         if password.isBcrypted(password)
+         encryptedPassword  <- registry.identityRepository.findEncryptedPassword(shopperId)
+         if password.isBcrypted(encryptedPassword)
       } yield shopper
    }
 

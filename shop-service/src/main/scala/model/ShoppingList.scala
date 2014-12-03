@@ -2,7 +2,7 @@ package shop.model
 
 import shop.infrastructure._
 
-case class ShoppingList(id: Option[Long], name: String, owner: Shopper, items: Seq[ShoppingItem]){
+case class ShoppingList(id: Option[Long], name: String, owner: Shopper, items: Seq[ShoppingItem]) extends Logging {
 
    def this(id: Option[Long], name: String, owner: Shopper) = this(id,name,owner,Seq.empty)
 
@@ -11,6 +11,7 @@ case class ShoppingList(id: Option[Long], name: String, owner: Shopper, items: S
    def this(name: String, owner: Shopper) = this(None,name,owner,Seq.empty)
 
    def save(implicit registry: ComponentRegistry): Option[ShoppingList] = {
+      logger.debug(s"Saving new list $name")
       registry.shoppingListRepository.save(this).map( newId => this.copy(id=Some(newId)) )
    }
 

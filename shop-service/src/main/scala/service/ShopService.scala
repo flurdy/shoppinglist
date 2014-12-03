@@ -40,9 +40,11 @@ trait ShopService extends HttpService {
   val myRoute =
     path("heartbeat") {
       get {
+        respondWithMediaType(MediaTypes.`text/html`){
         complete {
           <h1>ALIVE!</h1>
         }
+      }
       }
     } ~
     respondWithMediaType(MediaTypes.`application/json`){
@@ -106,7 +108,10 @@ trait ShopService extends HttpService {
               rejectEmptyResponse {
                 entity(as[ShoppingList]){ list =>
                   respondWithStatus(201) {
-                    val shoppingList = list.save
+                    val shoppingList: Option[ShoppingList] = for {
+                      realShopper <- shopper
+                      realList    <- list.copy(owner = realShopper).save
+                    } yield realList
                     val id = shoppingList.flatMap( s => s.id ).getOrElse(-1)
                     respondWithHeader(RawHeader("Location", s"/shopper/${username}/list/${id}")) {
                       complete(shoppingList)
@@ -117,7 +122,7 @@ trait ShopService extends HttpService {
             }
           } ~
           pathPrefix( IntNumber ) { listId =>
-            val shoppingList = ShoppingLists.findList(listId)
+            val shoppingList: Option[ShoppingList] = ShoppingLists.findList(listId)
             pathEnd {
               (put | parameter('method ! "put")) {
                 rejectEmptyResponse {
@@ -161,7 +166,7 @@ trait ShopService extends HttpService {
                 }
               } ~
               pathPrefix( IntNumber ) { itemId =>
-                val shoppingItem = shoppingList.flatMap( _.findItem(itemId) )
+                val shoppingItem: Option[ShoppingItem] = shoppingList.flatMap( _.findItem(itemId) )
                 pathEnd {
                   (put | parameter('method ! "put")) {
                     rejectEmptyResponse {

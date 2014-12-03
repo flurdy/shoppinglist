@@ -8,7 +8,6 @@ import shop.infrastructure._
 // TODO change to actors
 
 case class RegistrationDetails(username: String, password: String) { // extends Logging {
-
    def register(implicit registry: ComponentRegistry): Option[Shopper] = {
       Shoppers.findShopper(username) match {
          case None => {
@@ -16,16 +15,16 @@ case class RegistrationDetails(username: String, password: String) { // extends 
                encryptedPassword <- Some(password.bcrypt)
                shopperId         <- registry.shopperRepository.save(username)
                _                 <- registry.identityRepository.save(shopperId,encryptedPassword)
+               shopper           =  new Shopper(shopperId,username)
+               _                 <- shopper.createInitialList
             } yield new Shopper(shopperId,username)
          }
          case _ => None
       }
    }
-
 }
 
-case class LoginDetails(username: String, password: String) extends Logging {
-   logger.info(s"#### username [$username] [$password]")
+case class LoginDetails(username: String, password: String) { // extends Logging {
    def authenticate(implicit registry: ComponentRegistry): Option[Shopper] = {
       for{
          shopper   <- Shoppers.findShopper(username)
@@ -34,5 +33,4 @@ case class LoginDetails(username: String, password: String) extends Logging {
          if password.isBcrypted(encryptedPassword)
       } yield shopper
    }
-
 }

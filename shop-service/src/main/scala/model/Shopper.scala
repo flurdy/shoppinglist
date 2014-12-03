@@ -20,6 +20,7 @@ case class Shopper(id: Option[Long], username: String) extends Logging {
       } yield list
 
    def save(implicit registry: ComponentRegistry): Option[Shopper] = {
+      logger.info(s"Saving new shopper: $username")
       registry.shopperRepository.findShopper(username) match {
          case None => {
             registry.shopperRepository.save(username).map( newId => this.copy(id=Some(newId) ) )
@@ -29,6 +30,10 @@ case class Shopper(id: Option[Long], username: String) extends Logging {
             None
          }
       }
+   }
+
+   def createInitialList(implicit registry: ComponentRegistry): Option[ShoppingList] = {
+      id.flatMap{ shopperId => new ShoppingList(s"${username }'s list",this).save }
    }
 
 }

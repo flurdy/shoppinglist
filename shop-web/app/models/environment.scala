@@ -2,6 +2,8 @@ package models
 
 import infrastructure._
 import play.api.libs.json._
+import play.api.Play
+import play.api.Play.current
 
 case class ErrorMessage(message: String)
 
@@ -26,3 +28,8 @@ case class RegisterDetails(username: String, password: String, confirmPassword: 
 
 }
 
+object Environment {
+
+   def serviceContextUrl: String = Play.configuration.getString("shop.service.url").getOrElse("http://localhost")
+
+}

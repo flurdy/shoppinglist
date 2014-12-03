@@ -1,0 +1,25 @@
+shopweb:
+   build: shop-web
+   command: -Dconfig.file=conf/docker.conf run
+   links:
+      - shopservice
+   ports:
+      - "49900:9000"
+   volumes:
+      - shop-web:/var/local/shop/shop-web:rw
+   volumes_from:
+      - maven
+shopservice:
+   build: shop-service
+   command: run
+   expose:
+      - "8880"
+   volumes:
+      - shop-service:/var/local/shop/shop-service:rw
+   volumes_from:
+      - maven
+maven:
+   image: ubuntu
+   volumes:
+      - ~/.m2:/root/.m2
+      - ~/.ivy2:/root/.ivy2

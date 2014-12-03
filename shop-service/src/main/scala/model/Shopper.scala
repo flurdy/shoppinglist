@@ -9,10 +9,13 @@ case class Shopper(id: Option[Long], username: String) extends Logging {
 
    def this(username: String) = this(None,username)
 
-   def findLists(implicit registry: ComponentRegistry): Seq[ShoppingList] = for {
+   def findLists(implicit registry: ComponentRegistry): Seq[ShoppingList] = {
+     logger.debug(s"Finding lists for ${username}")
+     for {
          shopperId <- id.toList
          list      <- registry.shoppingListRepository.findOwnerLists(shopperId)
       } yield list
+   }
 
    def findOtherLists(implicit registry: ComponentRegistry): Seq[ShoppingList] = for {
          shopperId <- id.toList

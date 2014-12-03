@@ -11,23 +11,27 @@ import scala.util.{Failure, Success}
 
 object ShoppingListAdapter extends ServiceAdapter {
 
-   private def findListsUrl(shopper: Shopper) = s"$serviceContextUrl/shopper/${shopper.username}/shoppinglist/"
+   private def findListsUrl(shopper: Shopper) = s"$serviceContextUrl/shopper/${shopper.username}/lists"
 
-   private def findOtherListsUrl(shopper: Shopper) = s"$serviceContextUrl/shopper/${shopper.username}/shoppinglist/other/"
-   
-   private def findListUrl(username: String, listId: Long) = s"$serviceContextUrl/shopper/${username}/shoppinglist/$listId/"
-   
-   private def findItemsUrl(username: String, listId: Long) = s"$serviceContextUrl/shopper/${username}/shoppinglist/$listId/items/"
+   private def findOtherListsUrl(shopper: Shopper) = s"$serviceContextUrl/shopper/${shopper.username}/lists/other"
 
-	def findMyLists(shopper: Shopper): Seq[ShoppingList] = {   
+   private def findListUrl(username: String, listId: Long) = s"$serviceContextUrl/shopper/${username}/list/$listId"
+
+   private def findItemsUrl(username: String, listId: Long) = s"$serviceContextUrl/shopper/${username}/list/$listId/items"
+
+	def findMyLists(shopper: Shopper): Seq[ShoppingList] = {
       val lists = findMyListsCall(shopper)
       Await.result(lists, timeoutCall)
 	}
 
-   private def findMyListsCall(shopper: Shopper): Future[Seq[ShoppingList]] = {    
+   private def findMyListsCall(shopper: Shopper): Future[Seq[ShoppingList]] = {
       WS.url(findListsUrl(shopper)).withRequestTimeout(timeoutHttp).get() map { response =>
-         if(response.status == 200) ShoppingLists.parseLists(response.body)
-         else Seq.empty
+         if(response.status == 200) {
+            ShoppingLists.parseLists(response.body)
+         } else {
+            Logger.warn(s"My list call failed: ${response.status}")
+            Seq.empty
+         }
       }
    }
 
@@ -36,7 +40,7 @@ object ShoppingListAdapter extends ServiceAdapter {
       Await.result(lists, timeoutCall)
 	}
 
-   private def findOtherListsCall(shopper: Shopper): Future[Seq[ShoppingList]] = {    
+   private def findOtherListsCall(shopper: Shopper): Future[Seq[ShoppingList]] = {
       WS.url(findOtherListsUrl(shopper)).withRequestTimeout(timeoutHttp).get() map { response =>
          if(response.status == 200) ShoppingLists.parseLists(response.body)
          else Seq.empty
@@ -47,8 +51,8 @@ object ShoppingListAdapter extends ServiceAdapter {
       val lists = findListCall(username,listId)
       Await.result(lists, timeoutCall)
 	}
-   
-   private def findListCall(username: String, listId: Long): Future[Option[ShoppingList]] = {    
+
+   private def findListCall(username: String, listId: Long): Future[Option[ShoppingList]] = {
       WS.url(findListUrl(username,listId)).withRequestTimeout(timeoutHttp).get() map { response =>
          if(response.status == 200) ShoppingLists.parseList(response.body)
          else None
@@ -64,7 +68,7 @@ object ShoppingListAdapter extends ServiceAdapter {
       Await.result(items, timeoutCall)
    }
 
-   private def findItemsCall(username: String, listId: Long): Future[Seq[ShoppingItem]] = {    
+   private def findItemsCall(username: String, listId: Long): Future[Seq[ShoppingItem]] = {
       WS.url(findItemsUrl(username,listId)).withRequestTimeout(timeoutHttp).get() map { response =>
          if(response.status == 200) ShoppingItems.parseItems(response.body)
          else Seq.empty

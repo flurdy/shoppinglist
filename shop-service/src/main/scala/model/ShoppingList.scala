@@ -28,7 +28,9 @@ case class ShoppingList(id: Option[Long], name: String, owner: Shopper, items: S
 
 object ShoppingLists {
 
-   def findList(listId: Long)(implicit registry: ComponentRegistry) = registry.shoppingListRepository.findList(listId)
+   def findList(listId: Long)(implicit registry: ComponentRegistry) = {
+     registry.shoppingListRepository.findList(listId)
+  }
 
 }
 

@@ -22,6 +22,6 @@ object Boot extends App {
 
   (new RepositoryInitialiser).initialiseDatabase
 
-  IO(Http) ? Http.Bind(service, interface = "localhost", port = 8080)
+  IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = 8880)
 
 }

@@ -15,13 +15,13 @@ trait ServiceAdapter {
    val timeoutHttp = 5000
    val timeoutCall = 6 seconds
 
-   val serviceContextUrl = "http://localhost:8080"
+   val serviceContextUrl: String = Environment.serviceContextUrl
 
 }
 
 object ShopperAdapter extends ServiceAdapter {
-	
-	def findShopperUrl(username: String) = s"http://localhost:8080/shopper/$username"
+
+	def findShopperUrl(username: String) = s"$serviceContextUrl/shopper/$username"
 
 	def findShopper(username: String): Option[Shopper] = {
 		val response = findShopperCall(username)

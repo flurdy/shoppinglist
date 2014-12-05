@@ -1,25 +1,30 @@
 shopweb:
    build: shop-web
-   command: -Dconfig.file=conf/docker.conf run
+   command: -Dconfig.file=/var/local/application/conf/docker.conf
    links:
       - shopservice
    ports:
       - "49900:9000"
    volumes:
-      - shop-web:/var/local/shop/shop-web:rw
+      - shop-web:/var/local/application:rw
    volumes_from:
       - maven
+   environment:
+      APPNAME: shop-web
 shopservice:
    build: shop-service
    command: run
    expose:
       - "8880"
    volumes:
-      - shop-service:/var/local/shop/shop-service:rw
+      - shop-service:/var/local/application:rw
    volumes_from:
       - maven
+   environment:
+      APPNAME: shop-service
 maven:
-   image: ubuntu
+   image: debian:wheezy
    volumes:
-      - ~/.m2:/root/.m2
-      - ~/.ivy2:/root/.ivy2
+      - ~/.m2:/root/.m2:rw
+      - ~/.ivy2:/root/.ivy2:rw
+      - shop-web/repositories:/root/.sbt/repositories:ro

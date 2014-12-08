@@ -14,6 +14,4 @@ WORKDIR /var/local/application
 
 ENTRYPOINT ["/usr/local/bin/activator"]
 
-# CMD ["run"]
-
 EXPOSE 8880

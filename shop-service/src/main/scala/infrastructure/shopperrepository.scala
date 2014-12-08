@@ -28,13 +28,16 @@ class RepositoryInitialiser(implicit val registry: ComponentRegistry) extends Re
 
    def initialiseDatabase = {
       database.withSession{ implicit session =>
-         if (MTable.getTables.list.size < 4) {
-            createTables
-         } else {
-            (shoppers.ddl ++ identities.ddl ++ shoppingLists.ddl ++ shoppingItems.ddl ++ listParticipants.ddl).drop
-            createTables
-         }
+         List(shoppers,identities,shoppingLists,shoppingItems,listParticipants).map( createTableIfNotExists(_))
       }
+   }
+
+   private def isTableCreated(table: TableQuery[_ <: Table[_]])(implicit session: Session): Boolean = {
+      MTable.getTables(table.baseTableRow.tableName).list.isEmpty
+   }
+
+   private def createTableIfNotExists(table: TableQuery[_ <: Table[_]])(implicit session: Session){
+      if(isTableCreated(table)) table.ddl.create
    }
 
    def createTables {

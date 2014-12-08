@@ -14,9 +14,13 @@ WORKDIR /var/local/application
 
 RUN /usr/local/bin/activator stage
 
-ENV APPNAME shop-web
+WORKDIR /var/local/application/target/universal/stage/bin/
 
-ENTRYPOINT ["target/universal/stage/bin/$APPNAME"]
+RUN rm -f playapp ;\ 
+   for i in `ls | grep -v .bat | grep -v playapp` ;\
+   do mv $i playapp; done
+
+ENTRYPOINT ["/var/local/application/target/universal/stage/bin/playapp"]
 
 EXPOSE 9000
 EXPOSE 9999

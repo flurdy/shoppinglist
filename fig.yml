@@ -1,27 +1,35 @@
 shopweb:
    build: shop-web
-   command: -Dconfig.file=/var/local/application/conf/docker.conf
+   command: -Dconfig.file=/etc/opt/shopweb/docker.conf
    links:
       - shopservice
    ports:
       - "49900:9000"
    volumes:
       - shop-web:/var/local/application:rw
+      - shop-web/conf:/etc/opt/shopweb:ro
    volumes_from:
       - maven
-   environment:
-      APPNAME: shop-web
 shopservice:
    build: shop-service
-   command: run
+   command: run -Dconfig.file=/etc/opt/shopservice/docker.conf
+   links:
+      - "shopdb"
+   ports:
+      - "49880:8880"
    expose:
       - "8880"
    volumes:
       - shop-service:/var/local/application:rw
+      - shop-service/src/main/resources:/etc/opt/shopservice:ro
    volumes_from:
       - maven
-   environment:
-      APPNAME: shop-service
+shopdb:
+   image: postgres:9.4
+   ports:
+      - "49432:5432"
+   expose:
+      - "5432"
 maven:
    image: debian:wheezy
    volumes:

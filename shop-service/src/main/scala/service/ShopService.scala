@@ -80,6 +80,7 @@ trait ShopService extends HttpService {
       pathPrefix("shopper" / Segment) { username =>
         val shopper: Option[Shopper] = Shoppers.findShopper(username)
         pathEnd {
+          log.debug(s"Found shopper $username? ${shopper.isDefined}")
           rejectEmptyResponse {
             complete(shopper)
           }
@@ -87,6 +88,7 @@ trait ShopService extends HttpService {
         path("lists") {
           pathEnd {
             get {
+              log.debug(s"Finding all lists fpr $username")
               rejectEmptyResponse {
                 val lists: Option[Stream[ShoppingList]] = shopper.map(_.findLists.toStream)
                 complete(lists)
@@ -95,6 +97,7 @@ trait ShopService extends HttpService {
           } ~
           path("other") {
             get {
+              log.debug(s"Finding all other lists fpr $username")
               rejectEmptyResponse {
                 val lists = shopper.map(_.findOtherLists)
                 complete(lists.map(_.toStream))
@@ -122,7 +125,9 @@ trait ShopService extends HttpService {
             }
           } ~
           pathPrefix( IntNumber ) { listId =>
-            val shoppingList: Option[ShoppingList] = ShoppingLists.findList(listId)
+            log.debug(s"Finding list $listId")
+            val shoppingList: Option[ShoppingList] = shopper.flatMap(_.findList(listId))
+            log.debug(s"Found list? ${shoppingList.isDefined}")
             pathEnd {
               (put | parameter('method ! "put")) {
                 rejectEmptyResponse {

@@ -9,6 +9,15 @@ case class Shopper(id: Option[Long], username: String) extends Logging {
 
    def this(username: String) = this(None,username)
 
+   def findList(listId: Long)(implicit registry: ComponentRegistry): Option[ShoppingList] = {
+     logger.debug(s"Finding list $listId for ${username}")
+     ( for {
+         list        <- findLists
+         listIdFound <- list.id
+         if listIdFound == listId
+      } yield list ).headOption
+   }
+
    def findLists(implicit registry: ComponentRegistry): Seq[ShoppingList] = {
      logger.debug(s"Finding lists for ${username}")
      for {
@@ -36,7 +45,7 @@ case class Shopper(id: Option[Long], username: String) extends Logging {
    }
 
    def createInitialList(implicit registry: ComponentRegistry): Option[ShoppingList] = {
-      id.flatMap{ shopperId => new ShoppingList(s"${username }'s list",this).save }
+      id.flatMap{ shopperId => new ShoppingList(s"${username}'s list",this).save }
    }
 
 }

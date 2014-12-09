@@ -44,6 +44,7 @@ class RegistrationDetailsSpec extends Specification with Mockito {
          registry.shopperRepository.findShopper(anyString) returns None
          registry.shopperRepository.save(anyString) returns Some(123L)
          registry.identityRepository.save(anyLong,anyString) returns Some(456L)
+         registry.shoppingListRepository.save(any[ShoppingList])  answers { list => Some(222L) }
          RegistrationDetails("username","password").register must beSome
          there was one(registry.shopperRepository).save(anyString)
          there was one(registry.identityRepository).save(anyLong,anyString)

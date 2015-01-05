@@ -14,13 +14,11 @@ WORKDIR /var/local/application
 
 RUN /usr/local/bin/activator stage
 
-WORKDIR /var/local/application/target/universal/stage/bin/
+WORKDIR /var/local/application
 
-RUN rm -f playapp ;\ 
-   for i in `ls | grep -v .bat | grep -v playapp` ;\
-   do mv $i playapp; done
+ENTRYPOINT /var/local/application/target/universal/stage/bin/shopweb
 
-ENTRYPOINT ["/var/local/application/target/universal/stage/bin/playapp"]
+CMD "-Dconfig.file=/etc/opt/shopweb/docker.conf"
 
 EXPOSE 9000
 EXPOSE 9999

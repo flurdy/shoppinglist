@@ -1,17 +1,18 @@
 shopweb:
-   build: shop-web
+   build: shopweb
+   entrypoint: /var/local/application/target/universal/stage/bin/shopweb
    command: -Dconfig.file=/etc/opt/shopweb/docker.conf
    links:
-      - shopservice
+      - "shopservice"
    ports:
-      - "49900:9000"
+      - "49950:9000"
    volumes:
-      - shop-web:/var/local/application:rw
-      - shop-web/conf:/etc/opt/shopweb:ro
+      - ./shopweb:/var/local/application:rw
+      - shopweb/conf:/etc/opt/shopweb:ro
    volumes_from:
       - maven
 shopservice:
-   build: shop-service
+   build: shopservice
    command: run -Dconfig.file=/etc/opt/shopservice/docker.conf
    links:
       - "shopdb"
@@ -20,8 +21,8 @@ shopservice:
    expose:
       - "8880"
    volumes:
-      - shop-service:/var/local/application:rw
-      - shop-service/src/main/resources:/etc/opt/shopservice:ro
+      - shopservice:/var/local/application:rw
+      - shopservice/src/main/resources:/etc/opt/shopservice:ro
    volumes_from:
       - maven
 shopdb:
@@ -35,4 +36,4 @@ maven:
    volumes:
       - ~/.m2:/root/.m2:rw
       - ~/.ivy2:/root/.ivy2:rw
-      - shop-web/repositories:/root/.sbt/repositories:ro
+      - shopweb/repositories:/root/.sbt/repositories:ro

@@ -1,4 +1,4 @@
-name := """shop-service"""
+name := """shopservice"""
 
 version := "0.1-SNAPSHOT"
 
